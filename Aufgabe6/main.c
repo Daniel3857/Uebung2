@@ -17,6 +17,7 @@ Statuswort, gibt an in welchem Zustand sich die Anlage befindet
 0 = Initial, kein Werkstück eingelegt, Band steht still.
 1 = Werkstück am Bandanfang erkannt und exakt positioniert.
 2 = Band dreht vorwärts, bis Position erkannt ist
+
 ...
 */
 volatile uint8_t status = 0;
@@ -124,7 +125,7 @@ ISR(TIMER0_OVF_vect) {
 }
 
 void runInkrementSensorCheck() {
-	if( /* TODO: Abfrage ob Optischer Inkrementalgeber HIGH */ ) {
+	if( PIND & (1<< PIND5)/* TODO: Abfrage ob Optischer Inkrementalgeber HIGH */ ) {
 		if(sensorSchwarz == 0) {
 			// Flanke erkannt
 			if(PORTD & (1 << PORTD7)) {
@@ -133,7 +134,7 @@ void runInkrementSensorCheck() {
 			}
 			if(PORTB & (1 << PORTB0)) {
 				// Bei Rückwärtsfahrt runterzählen
-				nInkremente++;
+				nInkremente--;
 			}
 		}
 		sensorSchwarz = 1;
@@ -146,7 +147,7 @@ void runInkrementSensorCheck() {
 			}
 			if(PORTB & (1 << PORTB0)) {
 				// Bei Rückwärtsfahrt runterzählen
-				nInkremente++;
+				nInkremente--;
 			}
 		}
 		sensorSchwarz = 0;
@@ -181,6 +182,7 @@ int main() {
 
 				while( !(PIND & (1 << PIND2)) ) {
 					// Warten bis PIND2 auf HIGH geht
+					// Warten bis WS unter dem Sensor liegt
 				}
 
 				// Anhalten
@@ -202,15 +204,32 @@ int main() {
 			status = 2;			
 		}
 		if(status == 2) {
-			int mittelposition = /* TODO: Wert ermitteln*/;
+			int mittelposition = 38/* TODO: Wert ermitteln*/;
 
 			if(nInkremente >= mittelposition) {
 				// Förderband anhalten
 				PORTD &= ~(1 << PORTD7);
+				status = 3;
 			}
+			
 		}
-		if(status == 3) {
+		if(status == 3) { // WS in Mittelposition
 			/* TODO: Implementieren */
+			_delay_ms(5000); // 5s warten
+			PORTD |= (1 << PORTD7);
+			while( !(PIND & (1 <<PIND3)) ){
+			//Warten bis WS Endlage erreicht
+			}
+			PORTD &= ~(1 << PORTD7); //Motor aus
+			_delay_ms(2000);			// 2 sek warten
+			PORTB |= (1 << PORTB0); // rückwärtsfahren
+			while( !(PIND & (1 << PIND2)) )  {
+			// Warten bis WS wieder in Anfangsposition
+			}
+			PORTB &= ~(1 << PORTB0); //motor ausschalten
+			_delay_ms(2000); // 2 sek warten
+			
+			status =0;
 		}
 	}
 }
