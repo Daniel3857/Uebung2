@@ -17,7 +17,7 @@ int main() {
 	In Binärschreibweise ist DDRD jetzt: 10000000
 	*/
 	// TODO: D7 von DDRD auf HIGH schalten
-
+	DDRD |=(1 << 7);
 	/*
 	Das Bit an 8. Stelle (D7) von PortD wird jetzt
 	auf HIGH gesetzt. Die anderen Bits von Port D
@@ -25,7 +25,8 @@ int main() {
 	In Binärschreibweise ist PortD jetzt: 1xxxxxxx
 	*/
 	// TODO: D7 von PortD auf HIGH schalten
-
+	//PORTD &= ~(1 << 7); //Förderband ausschlaten
+	PORTD |= (1 << 7); //Förderband einschalten
 
 	while(1) {
 		// Innerhalb dieser Endlosschleife kann später
