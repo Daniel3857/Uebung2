@@ -95,7 +95,9 @@ ISR(TIMER0_OVF_vect) {
 	Falls das Förderband vorwärts dreht, dann iCounter eins hochzählen
 	*/
 	// TODO: Abfrage mit Logik implementieren
-
+	if (PIND & (1 << PIND7)/*Förderband dreht vorwärts*/) {
+		iCounter++;
+	}
 	/*
 	Clock von ATmega328P ist 16 MHz
 	Der Timer kann 8 Bit (256 Werte) speichern bevor er überlauft
@@ -104,10 +106,11 @@ ISR(TIMER0_OVF_vect) {
 	f = 16 MHz / 256
 	f = 62,5 KHz
 
-	??? Überläufe entsprechen 5 s
+	i = 5s*62500 Hz = 312500
+	312500000 Überläufe entsprechen 5 s
 	TODO: Ausrechnen welche Zahl bei ??? eingefügt werden muss
 	*/
-	if(iCounter > /* ??? */) {
+	if(iCounter > 312500 /* ??? */) {
 		if(wsCounter > 0) {
 			wsCounter = 0;
 		}
@@ -125,7 +128,7 @@ int main() {
 
 	while(1) {
 		// Prüfen, ob der Endlagensensor am Bandanfang aktiv ist
-		if( /* TODO: Prüfen ob PIND2 von PIND HIGH ist */ ) {
+		if( PIND & (1 << PIND2)/* TODO: Prüfen ob PIND2 von PIND HIGH ist */ ) {
 			/* 
 			Prüfen ob anfangBelegt == 0 ist.  Falls ja, dann handelt
 			es sich um eine steigende Flanke am Sensor
@@ -144,7 +147,7 @@ int main() {
 		}
 
 		// Prüfen, ob der Endlagensensor am Bandende aktiv ist
-		if( /* TODO: Prüfen ob PIND3 von PIND HIGH ist */ ) {
+		if( PIND & (1 <<PIND3)/* TODO: Prüfen ob PIND3 von PIND HIGH ist */ ) {
 			// Es befindet sich ein WS im Endbereich, endeBelegt auf 1 setzen
 			endeBelegt = 1;
 		} else {
@@ -156,6 +159,14 @@ int main() {
 			iCounter auf 0 zurücksetzen
 			*/
 			// TODO: Logik implementieren
+			if(endeBelegt == 1) {
+				/* TODO: Logik implementieren */
+				endeBelegt = 0;
+				if (wsCounter > 0) {
+					wsCounter--;
+				}
+				iCounter = 0;
+			}
 		}
 
 		/*
@@ -163,7 +174,7 @@ int main() {
 		und kein Werkstück im Endbereich ist (endeBelegt == 0), dann
 		soll das Förderband vorwärts drehen
 		*/
-		if( /* TODO: implementieren */ ) {
+		if( (wsCounter > 0) && (endeBelegt == 0)/* TODO: implementieren */ ) {
 			// Förderband vorwärts drehen
 			PORTD |= (1 << DDD7);
 		} else {
